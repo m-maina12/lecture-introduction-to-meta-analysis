@@ -1,0 +1,111 @@
+---
+title: "Introduction to Meta-Analysis"
+author: "Marta Mainetti"
+date: "2026-05-21"
+output: pdf_document
+---
+
+# Import libraries
+```{r, message=FALSE, warning=FALSE}
+library(dplyr)
+library(meta)
+library(readxl)
+```
+
+# Load data
+
+```{r echo=FALSE}
+setwd("~/Desktop/unimi_lecture/script")
+
+AcuteManiaP_raw <- read_excel("AcuteManiaP.xls")
+```
+
+
+```{r}
+AcuteManiaP <- AcuteManiaP_raw %>% filter(treat2 == "Risperidone")
+
+str(AcuteManiaP)
+```
+
+```{r}
+nrow(AcuteManiaP)
+```
+
+```{r}
+pooledSMD1 <- metacont(mean.c = mean1, sd.c = sd1, n.c = ncont1,
+                       mean.e = mean2, sd.e = sd2, n.e = ncont2,
+                       data = AcuteManiaP, studlab = studlab, sm = "SMD")
+
+summary(pooledSMD1)
+```
+
+5 studies were involved in the meta-analysis the fixed effect model gave an 
+estimate of -0.60 [-0.73; -0.48]  random effects model: -0.59 [-0.76; -0.43]
+
+Both significant
+
+The test of heterogeneity does not highlight evidence of heterogeneity. This 
+doesn't mean that there's no heterogeneity, it might be low power
+
+meta analysis: in this case I specify the estimator PM of tau (also the default)
+and I ask not to compute a fixed-effect meta-analysis
+
+```{r}
+summary(update(pooledSMD1, method.tau = "PM")) 
+```
+
+random effects model: -0.60 [-0.76; -0.43]
+It is very similar to REML case (default)
+However, with only 5 studies, it's difficult to estimate the heterogeneity
+(we need at least >5 studies). 
+
+```{r}
+summary(update(pooledSMD1, method.random.ci = T)) 
+```
+
+Hartung-Knapp adjustment for random effects model (df = 4)
+
+# FOREST PLOTS
+
+```{r}
+forest(pooledSMD1, sortvar = ncont1 + ncont2,
+       prediction = T, common = T)
+```
+
+# Meta-analysis with binary outcome
+Odds-Ratio as Effect Size
+
+```{r}
+pooledOR <- metabin(event.e = event2,
+                    n.e = n2,
+                    event.c = event1,
+                    n.c = n1,
+                    data = AcuteManiaP,
+                    studlab = studlab, sm = "OR")
+summary(pooledOR)
+```
+
+```{r}
+forest(pooledOR, sortvar = n1 + n2, layout = "JAMA",  allstudies = F,
+             fs.study = 10, ff.study = "italic",
+             col.diamond = "indianred", col.diamond.lines = "dodgerblue",
+             col.square = "salmon", col.square.lines = "salmon")
+```
+
+```{r}
+summary(update(pooledOR, sm = "RR")) 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
